@@ -9,14 +9,14 @@ module memory #(parameter int unsigned N = 1024) (
     input tsize_e tsize,
     input bit clk,
     input bit write,
-    input bit [31:0] address,
-    input bit [31:0] address2
+    input bit [$clog2(N)-1:0] address,
+    input bit [$clog2(N)-1:0] address2
 );
     bit [7:0] mem[N];
 
     always_comb begin
-        if (address[1:0] == 2'b00)
-            data2 = {mem[address], mem[address + 1], mem[address + 2], mem[address + 3]};
+        if (address2[1:0] == 2'b00)
+            data2 = {mem[address2], mem[address2 + 1], mem[address2 + 2], mem[address2 + 3]};
         else
             rerror2 = 1;
     end

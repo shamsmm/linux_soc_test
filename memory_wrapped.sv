@@ -7,6 +7,9 @@ module memory_wrapped #(parameter int unsigned N = 1024) (
 
 bit rerror, rerror2, werror;
 
+assign ibus.bdone = 1'b1;
+assign dbus.bdone = 1'b1;
+
 memory #(N) wrapped_mem (
     .data(dbus.rdata),
     .data2(ibus.rdata),

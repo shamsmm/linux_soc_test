@@ -16,5 +16,10 @@ simulate: compile
 compile:
 	verilator --binary -j 0 -o test --top-module top +incdir+$(SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --timescale 1ns/1ns
 
+generate:
+	riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mlittle-endian -o test.elf test.asm
+	riscv32-unknown-elf-objcopy -O binary --pad-to=1024 --gap-fill=0x00 test.elf test.bin
+	xxd -p -c 1 test.bin > memory.hex
+
 clean:
 	rm -f test.fst test.vvp test.elf irom.bin
