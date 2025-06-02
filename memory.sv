@@ -16,7 +16,7 @@ module memory #(parameter int unsigned N = 1024) (
 
     always_comb begin
         if (address2[1:0] == 2'b00)
-            data2 = {mem[address2], mem[address2 + 1], mem[address2 + 2], mem[address2 + 3]};
+            data2 = {mem[address2 + 3], mem[address2 + 2], mem[address2 + 1], mem[address2]};
         else
             rerror2 = 1;
     end
@@ -26,13 +26,13 @@ module memory #(parameter int unsigned N = 1024) (
         case(tsize)
             WORD: begin
                 if (address[1:0] == 2'b00)
-                    data = {mem[address], mem[address + 1], mem[address + 2], mem[address + 3]};
+                    data = {mem[address + 3], mem[address + 2], mem[address + 1], mem[address]};
                 else
                     rerror = 1;
             end
             HALFWORD: begin
                 if (address[0] == 1'b0)
-                    data = {{16{0}}, mem[address], mem[address + 1]};
+                    data = {{16{0}}, mem[address + 1], mem[address]};
                 else
                     rerror = 1;
             end
@@ -48,14 +48,14 @@ module memory #(parameter int unsigned N = 1024) (
             case(tsize)
                 WORD: begin
                     if (address[1:0] == 2'b00) begin
-                        {mem[address], mem[address + 1], mem[address + 2], mem[address + 3]} <= write_data;
+                        {mem[address + 3], mem[address + 2], mem[address + 1], mem[address]} <= write_data;
                         werror <= 0;
                     end else
                         werror <= 1;
                 end
                 HALFWORD: begin
                     if (address[0] == 1'b0) begin
-                        {mem[address], mem[address + 1]} = write_data[15:0];
+                        {mem[address + 1], mem[address]} = write_data[15:0];
                         werror <= 0;
                     end else
                         werror <= 1;
