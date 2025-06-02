@@ -8,8 +8,8 @@ master_bus_if ibus_if_core0(clk, rst_n);
 slave_bus_if dbus_if_mem0(clk, rst_n);
 slave_bus_if ibus_if_mem0(clk, rst_n);
 
-rv_core core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0));
-memory mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0));
+rv_core core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
+memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk));
 
 always_comb begin
     // default bus values
@@ -31,8 +31,8 @@ always_comb begin
     // poor man's multiplexor
     case(dbus_if_core0.ic.addr[31:28])
         4'hF: begin
-            dbus_if_core0.ic.bdone = bus_if_mem0.ic.bdone;
-            dbus_if_core0.ic.rdata = bus_if_mem0.ic.rdata;
+            dbus_if_core0.ic.bdone = dbus_if_mem0.ic.bdone;
+            dbus_if_core0.ic.rdata = dbus_if_mem0.ic.rdata;
             dbus_if_mem0.ic.ss = 1'b1;
         end
         // other
@@ -65,8 +65,23 @@ always_comb begin
     endcase
 end
 
+initial forever #5 clk = !clk;
+initial #100 $finish();
+
 initial begin
-    $readmemh("tb/memory.txt", imem.mem, 0, 15);
+    // release reset
+    #3;
+    rst_n = 1;
+end
+
+initial begin
+    // dump everything
+    $dumpfile("dumpfile.fst");
+    $dumpvars(0, top);
+
+
+    // initialize memory
+    $readmemh("memory.hex", mem0.wrapped_mem.mem,0,1000);
 end
 
 endmodule

@@ -16,7 +16,7 @@ module memory #(parameter int unsigned N = 1024) (
 
     always_comb begin
         if (address[1:0] == 2'b00)
-            data = {mem[address], mem[address + 1], mem[address + 2], mem[address + 3]};
+            data2 = {mem[address], mem[address + 1], mem[address + 2], mem[address + 3]};
         else
             rerror2 = 1;
     end
@@ -49,20 +49,20 @@ module memory #(parameter int unsigned N = 1024) (
                 WORD: begin
                     if (address[1:0] == 2'b00) begin
                         {mem[address], mem[address + 1], mem[address + 2], mem[address + 3]} <= write_data;
-                        error <= 0;
+                        werror <= 0;
                     end else
-                        error <= 1;
+                        werror <= 1;
                 end
                 HALFWORD: begin
                     if (address[0] == 1'b0) begin
                         {mem[address], mem[address + 1]} = write_data[15:0];
-                        error <= 0;
+                        werror <= 0;
                     end else
-                        error <= 1;
+                        werror <= 1;
                 end
                 BYTE: begin
                     mem[address] <= write_data[7:0];
-                    error <= 0;
+                    werror <= 0;
                 end
             endcase
         end
