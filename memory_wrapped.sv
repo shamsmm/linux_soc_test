@@ -20,8 +20,8 @@ memory #(N) wrapped_mem (
     .tsize(dbus.tsize),
     .clk(clk),
     .write(dbus.ttype == WRITE),
-    .address(dbus.addr),
-    .address2(ibus.addr)
+    .address(dbus.addr[$clog2(N) - 1:0]),
+    .address2(ibus.addr[$clog2(N) - 1:0])
 );
 
 endmodule

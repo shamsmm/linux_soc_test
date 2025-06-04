@@ -1,5 +1,8 @@
 module top;
 
+localparam PERIOD = 5;
+localparam TIMEOUT = 200;
+
 bit clk, rst_n;
 
 master_bus_if dbus_if_core0(clk, rst_n);
@@ -13,7 +16,7 @@ memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk));
 
 always_comb begin
     // default bus values
-    dbus_if_core0.ic.rdata = 1'b0;
+    dbus_if_core0.ic.rdata = 32'b0;
     dbus_if_core0.ic.berror = 1'b0;
     dbus_if_core0.ic.bdone = 1'b0;
     dbus_if_core0.ic.bgnt = dbus_if_core0.ic.breq; // always grant (no contention)
@@ -41,7 +44,7 @@ end
 
 always_comb begin
     // default bus values
-    ibus_if_core0.ic.rdata = 1'b0;
+    ibus_if_core0.ic.rdata = 32'b0;
     ibus_if_core0.ic.berror = 1'b0;
     ibus_if_core0.ic.bdone = 1'b0;
     ibus_if_core0.ic.bgnt = ibus_if_core0.ic.breq; // always grant (no contention)
@@ -65,8 +68,8 @@ always_comb begin
     endcase
 end
 
-initial forever #5 clk = !clk;
-initial #100 $finish();
+initial forever #PERIOD clk = !clk;
+initial #TIMEOUT $finish();
 
 initial begin
     rst_n = 1;
