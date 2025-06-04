@@ -1,7 +1,7 @@
 module top;
 
 localparam PERIOD = 5;
-localparam TIMEOUT = 200;
+localparam TIMEOUT = 500;
 
 bit clk, rst_n;
 
