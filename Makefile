@@ -1,6 +1,7 @@
-SOURCE = ../src/rv_core
-
-FILES = $(wildcard $(SOURCE)/*.sv)
+RVCORE_SOURCE = ../src/rv_core
+IC_SOURCE = ../src/interconnect
+FILES = $(wildcard $(RVCORE_SOURCE)/*.sv)
+FILES += $(wildcard $(IC_SOURCE)/*.sv)
 FILES += memory.sv memory_wrapped.sv top.sv
 
 # skip warning if needed
@@ -15,7 +16,7 @@ simulate: compile
 	./obj_dir/test
 
 compile: generate
-	verilator --binary -j 0 -o test --top-module top +incdir+$(SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns
+	verilator --binary -j 0 -o test --top-module top +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns
 
 generate: test.asm
 	riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mlittle-endian -o test.elf test.asm
