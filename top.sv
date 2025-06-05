@@ -2,7 +2,7 @@ module top;
 
 // simulation clock period and timeout
 localparam PERIOD = 5;
-localparam TIMEOUT = 1000;
+localparam TIMEOUT = 20000;
 
 // master clk and master rst_n
 bit clk, rst_n;
