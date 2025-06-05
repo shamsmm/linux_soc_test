@@ -1,5 +1,6 @@
 obj_dir
 dumpfile.fst
 memory.hex
+rom.hex
 test.bin
 test.elf

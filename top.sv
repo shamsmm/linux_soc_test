@@ -15,11 +15,17 @@ master_bus_if ibus_if_core0(clk, rst_n);
 slave_bus_if dbus_if_mem0(clk, rst_n);
 slave_bus_if ibus_if_mem0(clk, rst_n);
 
+// flash rom interface (read only) to bus (I-bus)
+slave_bus_if ibus_if_rom0(clk, rst_n);
+
 // riscv32 core-0
-rv_core #(.INITIAL_PC(32'hF000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
+rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
 
 // dual port memory
 memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk));
+
+// rom single port memory
+rom_wrapped rom0(.bus(ibus_if_rom0), .clk(clk));
 
 // interconnect
 
@@ -35,7 +41,7 @@ endproperty
 
 property ibus_access_valid;
     @(posedge clk)
-    ibus_if_core0.bstart |-> ibus_if_mem0.ic.ss;
+    ibus_if_core0.bstart |-> ibus_if_mem0.ic.ss | ibus_if_rom0.ic.ss;
 endproperty
 
 
@@ -67,6 +73,8 @@ initial begin
     $dumpfile("dumpfile.fst");
     $dumpvars(0, top);
 
+    // initialize memory
+    $readmemh("rom.hex", rom0.wrapped_mem.mem,0,1000);
 
     // initialize memory
     $readmemh("memory.hex", mem0.wrapped_mem.mem,0,1000);
