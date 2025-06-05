@@ -19,7 +19,7 @@ memory #(N) wrapped_mem (
     .write_data(dbus.wdata),
     .tsize(dbus.tsize),
     .clk(clk),
-    .write(dbus.ttype == WRITE),
+    .write(dbus.ss && dbus.ttype == WRITE), // state changing
     .address(dbus.addr[$clog2(N) - 1:0]),
     .address2(ibus.addr[$clog2(N) - 1:0])
 );

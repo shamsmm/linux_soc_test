@@ -18,6 +18,9 @@ slave_bus_if ibus_if_mem0(clk, rst_n);
 // flash rom interface (read only) to bus (I-bus)
 slave_bus_if ibus_if_rom0(clk, rst_n);
 
+// gpio memory mapped interface to bus (D-bus)
+slave_bus_if dbus_if_gpio0(clk, rst_n);
+
 // riscv32 core-0
 rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
 
@@ -26,6 +29,9 @@ memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk));
 
 // rom single port memory
 rom_wrapped rom0(.bus(ibus_if_rom0), .clk(clk));
+
+// gpio memory mapped
+gpio_wrapped gpio0(.bus(dbus_if_gpio0), .clk(clk));
 
 // interconnect
 
@@ -36,12 +42,12 @@ ibus_interconnect ibus_ic(.*);
 // assertions and coverage
 property dbus_access_valid;
     @(posedge clk)
-    dbus_if_core0.bstart |-> dbus_if_mem0.ic.ss;
+    dbus_if_core0.bstart |-> |{dbus_if_mem0.ss, dbus_if_gpio0.ss};
 endproperty
 
 property ibus_access_valid;
     @(posedge clk)
-    ibus_if_core0.bstart |-> ibus_if_mem0.ic.ss | ibus_if_rom0.ic.ss;
+    ibus_if_core0.bstart |-> |{ibus_if_mem0.ss, ibus_if_rom0.ss};
 endproperty
 
 

@@ -2,7 +2,7 @@ RVCORE_SOURCE = ../src/rv_core
 IC_SOURCE = ../src/interconnect
 FILES = $(wildcard $(RVCORE_SOURCE)/*.sv)
 FILES += $(wildcard $(IC_SOURCE)/*.sv)
-FILES += memory.sv memory_wrapped.sv rom_wrapped.sv top.sv
+FILES += memory.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.sv top.sv
 
 # skip warning if needed
 VERILATOR_OPTIONS=-Wno-UNOPTFLAT -Wno-CASEINCOMPLETE
