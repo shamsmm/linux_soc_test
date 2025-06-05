@@ -1,7 +1,7 @@
 module top;
 
 localparam PERIOD = 5;
-localparam TIMEOUT = 500;
+localparam TIMEOUT = 1000;
 
 bit clk, rst_n;
 
@@ -13,6 +13,19 @@ slave_bus_if ibus_if_mem0(clk, rst_n);
 
 rv_core #(.INITIAL_PC(32'hF000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
 memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk));
+
+property dbus_access_valid;
+    @(posedge clk)
+    dbus_if_core0.bstart |-> dbus_if_mem0.ic.ss;
+endproperty
+
+property ibus_access_valid;
+    @(posedge clk)
+    ibus_if_core0.bstart |-> ibus_if_mem0.ic.ss;
+endproperty
+
+assert property(dbus_access_valid) else $error("Accessing illegal D-bus address %h", dbus_if_core0.addr);
+assert property(ibus_access_valid) else $error("Accessing illegal I-bus address %h", ibus_if_core0.addr);
 
 always_comb begin
     // default bus values
