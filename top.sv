@@ -43,6 +43,7 @@ always_comb begin
     dbus_if_mem0.ic.addr = dbus_if_core0.ic.addr;
     dbus_if_mem0.ic.tsize = dbus_if_core0.ic.tsize;
     dbus_if_mem0.ic.bstart = dbus_if_core0.ic.bstart;
+    dbus_if_mem0.ic.ttype = dbus_if_core0.ic.ttype;
 
     // poor man's multiplexor
     case(dbus_if_core0.ic.addr[31:28])
@@ -69,6 +70,7 @@ always_comb begin
     ibus_if_mem0.ic.addr = ibus_if_core0.ic.addr;
     ibus_if_mem0.ic.tsize = ibus_if_core0.ic.tsize;
     ibus_if_mem0.ic.bstart = ibus_if_core0.ic.bstart;
+    ibus_if_mem0.ic.ttype = READ;
 
     // poor man's multiplexor
     case(ibus_if_core0.ic.addr[31:28])
