@@ -10,7 +10,7 @@ FILES += memory.sv memory_word.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.
 VERILATOR_OPTIONS=-Wno-UNOPTFLAT -Wno-CASEINCOMPLETE
 
 # cycle between files as needed
-ASM_TO_COMPILE=test3.asm
+ASM_TO_COMPILE=test2.asm
 
 all: visualize
 

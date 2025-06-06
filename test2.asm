@@ -15,8 +15,8 @@
 # GPIO Register Offsets (SiFive FE310 compatible)
 .equ GPIO_BASE,     0x30000000
 .equ GPIO_INPUT,    0x00    # Input value register
-.equ GPIO_OUTPUT,   0x08    # Output value register  
-.equ GPIO_OUTPUT_EN, 0x0C   # Output enable register
+.equ GPIO_OUTPUT_EN,   0x08    # Output value register  
+.equ GPIO_OUTPUT, 0x0C   # Output enable register
 .equ GPIO_PUE,      0x10    # Pull-up enable register
 .equ GPIO_IOFSEL,   0x38    # I/O function select (0=GPIO, 1=alternate)
 
@@ -27,7 +27,7 @@
 .equ PIN_OUTPUT_MASK, (1 << PIN_OUTPUT)
 
 # Delay count for blinking
-.equ DELAY_COUNT,   0x10
+.equ DELAY_COUNT,   0x10000
 
 _start:
     # Load GPIO base address
