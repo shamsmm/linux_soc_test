@@ -27,7 +27,7 @@
 .equ PIN_OUTPUT_MASK, (1 << PIN_OUTPUT)
 
 # Delay count for blinking
-.equ DELAY_COUNT,   0x600000
+.equ DELAY_COUNT,   0x10
 
 _start:
     # Load GPIO base address
@@ -60,7 +60,7 @@ main_loop:
     
 input_pressed:
     # Input pressed - fast blink
-    li a0, (DELAY_COUNT >> 3)       # Faster blink when input pressed
+    li a0, (DELAY_COUNT >> 1)       # Faster blink when input pressed
     j do_blink
     
 normal_blink:

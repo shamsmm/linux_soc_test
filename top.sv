@@ -2,7 +2,7 @@ module top;
 
 // simulation clock period and timeout
 localparam PERIOD = 5;
-localparam TIMEOUT = 20000;
+localparam TIMEOUT = 100000;
 
 // master clk and master rst_n
 bit clk, rst_n;
@@ -25,10 +25,10 @@ slave_bus_if dbus_if_gpio0(clk, rst_n);
 rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
 
 // dual port memory
-memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk));
+memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk), .rst_n(rst_n));
 
 // rom single port memory
-rom_wrapped rom0(.bus(ibus_if_rom0), .clk(clk));
+rom_wrapped rom0(.bus(ibus_if_rom0), .clk(clk), .rst_n(rst_n));
 
 // gpio memory mapped
 gpio_wrapped gpio0(.bus(dbus_if_gpio0), .clk(clk));
@@ -79,11 +79,11 @@ initial begin
     $dumpfile("dumpfile.fst");
     $dumpvars(0, top);
 
-    // initialize memory
-    $readmemh("rom.hex", rom0.wrapped_mem.mem,0,1000);
+    // initialize ROM memory
+    $readmemh("rom.mi", rom0.wrapped_mem.mem,0,250);
 
-    // initialize memory
-    $readmemh("memory.hex", mem0.wrapped_mem.mem,0,1000);
+    // initialize RAM memory
+    //$readmemh("memory.hex", mem0.wrapped_mem.mem,0,1000);
 end
 
 endmodule
