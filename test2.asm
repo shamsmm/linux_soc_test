@@ -27,7 +27,7 @@
 .equ PIN_OUTPUT_MASK, (1 << PIN_OUTPUT)
 
 # Delay count for blinking
-.equ DELAY_COUNT,   0x10000
+.equ DELAY_COUNT,   0x10
 
 _start:
     # Load GPIO base address
