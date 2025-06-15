@@ -1,34 +1,99 @@
 module jtag_top;
+    import jtag::*;
+
+    jtag_state_t state = dut.state;
+
     localparam PERIOD = 5;
-    localparam TIMEOUT = 1500;
+    //localparam TIMEOUT = 5000;
 
 
     bit tdo, tdo_en, tclk, tdi, tms, trst, clk, tclk_en;
-
     logic [31:0] drscan = 0;
 
     always_comb tclk = tclk_en ? clk : 0;
 
     dtm_jtag dut(.*);
 
-    typedef enum logic [3:0] {
-        TEST_LOGIC_RESET = 4'h0,
-        RUN_TEST_IDLE    = 4'h1,
-        SELECT_DR_SCAN   = 4'h2,
-        CAPTURE_DR       = 4'h3,
-        SHIFT_DR         = 4'h4,
-        EXIT1_DR         = 4'h5,
-        PAUSE_DR         = 4'h6,
-        EXIT2_DR         = 4'h7,
-        UPDATE_DR        = 4'h8,
-        SELECT_IR_SCAN   = 4'h9,
-        CAPTURE_IR       = 4'hA,
-        SHIFT_IR         = 4'hB,
-        EXIT1_IR         = 4'hC,
-        PAUSE_IR         = 4'hD,
-        EXIT2_IR         = 4'hE,
-        UPDATE_IR        = 4'hF
-    } jtag_state_t;
+    task read_dr(); // 32 bit read
+        assert(state == RUN_TEST_IDLE);
+
+        @(negedge clk);
+        tms = 1;
+        @(posedge clk); #1 assert(state == SELECT_DR_SCAN);
+
+        @(negedge clk);
+        tms = 0;
+        @(posedge clk); #1 assert(state == CAPTURE_DR);
+
+        @(negedge clk);
+        tms = 0;
+        @(posedge clk) #1 assert(state == SHIFT_DR);
+
+        drscan = 0; // initialize to 0
+        repeat(32) begin
+            @(negedge clk);
+            tdi = 0;
+            tms = 0;
+
+            @(posedge clk) #1 assert(state == SHIFT_DR);
+            drscan = {tdo, drscan[31:1]};
+        end
+
+        @(negedge clk);
+        tms = 1;
+        @(posedge clk); #1 assert(state == EXIT1_DR);
+
+        @(negedge clk);
+        tms = 1;
+        @(posedge clk); #1 assert(state == UPDATE_DR);
+
+        @(negedge clk);
+        tms = 0; // hold it at RUN_TEST_IDLE
+        @(posedge clk); #1 assert(state == RUN_TEST_IDLE);
+        #1;
+    endtask
+
+    task update_ir(logic [5:0] ir); // 32 bit read
+            assert(state == RUN_TEST_IDLE);
+
+            @(negedge clk);
+            tms = 1;
+            @(posedge clk); #1 assert(state == SELECT_DR_SCAN);
+
+            @(negedge clk);
+            tms = 1;
+            @(posedge clk); #1 assert(state == SELECT_IR_SCAN);
+
+            @(negedge clk);
+            tms = 0;
+            @(posedge clk); #1 assert(state == CAPTURE_IR);
+
+            @(negedge clk);
+            tms = 0;
+            @(posedge clk); #1 assert(state == SHIFT_IR);
+
+            // shift instruction
+            for (int i = 0; i < 5; i++) begin
+                @(negedge clk);
+                tdi = ir[i];
+                tms = 0;
+                @(posedge clk); #1 assert(state == SHIFT_IR);
+            end
+            @(negedge clk);
+            tdi = ir[5];
+            tms = 1;
+            @(posedge clk); #1 assert(state == EXIT1_IR);
+
+            @(negedge clk);
+            tms = 1;
+            @(posedge clk); #1 assert(state == UPDATE_IR);
+
+            @(negedge clk);
+            tms = 0; // hold it at RUN_TEST_IDLE
+            @(posedge clk); #1 assert(state == RUN_TEST_IDLE);
+            #1;
+        endtask
+
 
     initial begin
         // Release reset
@@ -39,86 +104,42 @@ module jtag_top;
         // start
 
         @(negedge clk);
-        tclk_en = 1;
-        tms = 1;
+        tclk_en = 1; // enable test clock always
+
+        tms = 1; // consecutive for 5 times
 
         repeat(5) @(posedge clk);
-        assert(dut.state == TEST_LOGIC_RESET);
+        assert(state == TEST_LOGIC_RESET);
 
-        // read IDCODE
-        tms = 0;
-        @(posedge clk); #1 assert(dut.state == RUN_TEST_IDLE);
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == SELECT_DR_SCAN);
-        tms = 0;    
-        @(posedge clk); #1 assert(dut.state == CAPTURE_DR);
-        tms = 0;
-        @(posedge clk) #1 assert(dut.state == SHIFT_DR);
+        @(negedge clk);
+        tms = 0; // got to RUN_TEST_IDLE
+        @(posedge clk);
+        #1;
 
-        repeat(32) begin
-            tms = 0;
-            @(posedge clk) #1 assert(dut.state == SHIFT_DR);
-            drscan = {tdo, drscan[31:1]};
-        end
+        // read IDCODE initially
+        read_dr();
+        assert(drscan === 32'h1BEEF001);
 
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == EXIT1_DR);
+        // test ILLEGAL PATTERN
+        update_ir(6'b101010);
+        assert(dut.ir === 6'b101010);
 
-        // test bypass
+        read_dr();
+        assert(drscan === 32'h0);
 
-        repeat(10) @(posedge clk);
-        tms = 0;
-        @(posedge clk); #1 assert(dut.state == RUN_TEST_IDLE);
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == SELECT_DR_SCAN);
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == SELECT_IR_SCAN);
-        tms = 0;
-        @(posedge clk); #1 assert(dut.state == CAPTURE_IR);
+        // test SAMPLE PATTERN
+        update_ir(6'b0);
+        assert(dut.ir === 6'b0);
 
-        repeat(6) begin
-            tms = 0;
-            tdi = 0; // all 1s for SAMPLE
-            @(posedge clk); #1 assert(dut.state == SHIFT_IR);
-        end
+        read_dr();
+        assert(drscan === 32'h55555555);
 
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == EXIT1_IR);
-
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == UPDATE_IR);
-
-        tms = 1;
-        @(posedge clk); #1 assert(dut.state == SELECT_DR_SCAN);
-        
-        tms = 0;    
-        @(posedge clk); #1 assert(dut.state == CAPTURE_DR);
-
-        tms = 0;
-        @(posedge clk) #1 assert(dut.state == SHIFT_DR);
-
-        tms = 0;
-        tdi = 1;
-        @(posedge clk) #1 assert(dut.state == SHIFT_DR);
-        drscan = {tdo, drscan[31:1]};
-
-        repeat(31) begin
-            tms = 0;
-            tdi = 0;
-            @(posedge clk) #1 assert(dut.state == SHIFT_DR);
-            drscan = {tdo, drscan[31:1]};
-        end
-
-        tms = 1;
-
-        // Gemini Testbench
-        repeat(10) @(posedge clk);
-        
-
+        // finish
+        $finish();
     end
 
     initial forever #PERIOD clk = !clk;
-    initial #TIMEOUT $finish;
+    //initial #TIMEOUT $finish;
 
     initial begin
         // dump everything
