@@ -78,7 +78,7 @@ module jtag_top;
 
         repeat(6) begin
             tms = 0;
-            tdi = 1; // all 1s for BYPASS
+            tdi = 0; // all 1s for SAMPLE
             @(posedge clk); #1 assert(dut.state == SHIFT_IR);
         end
 
@@ -110,6 +110,11 @@ module jtag_top;
         end
 
         tms = 1;
+
+        // Gemini Testbench
+        repeat(10) @(posedge clk);
+        
+
     end
 
     initial forever #PERIOD clk = !clk;
