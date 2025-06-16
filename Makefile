@@ -8,7 +8,8 @@ FILES += $(filter-out ../src/rv_core/instructions.sv, $(filter-out ../src/rv_cor
 FILES += $(wildcard $(IC_SOURCE)/*.sv)
 FILES += memory.sv memory_word.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.sv top.sv jtag_test.sv
 
-TOP_MODULE=jtag_top
+#TOP_MODULE=top
+include Makefile.local # if it is not present then override TOP_MODULE directly and comment this line
 
 # skip warning if needed
 VERILATOR_OPTIONS=-Wno-UNOPTFLAT -Wno-CASEINCOMPLETE
