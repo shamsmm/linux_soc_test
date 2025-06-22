@@ -9,13 +9,11 @@ FILES += $(wildcard $(IC_SOURCE)/*.sv)
 FILES += memory.sv memory_word.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.sv top.sv jtag_test.sv
 
 #TOP_MODULE=top
+#ASM_TO_COMPILE=test2.asm
 include Makefile.local # if it is not present then override TOP_MODULE directly and comment this line
 
 # skip warning if needed
 VERILATOR_OPTIONS=-Wno-UNOPTFLAT -Wno-CASEINCOMPLETE
-
-# cycle between files as needed
-ASM_TO_COMPILE=test2.asm
 
 all: visualize
 
@@ -25,8 +23,12 @@ visualize: simulate
 simulate: compile
 	./obj_dir/test
 
+coverage: simulate
+	verilator_coverage -write-info coverage.info coverage.dat
+	genhtml coverage.info --output-directory html_coverage_report
+
 compile: generate
-	verilator --binary -j 0 -o test --top-module $(TOP_MODULE) +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns
+	verilator --binary -j 0 -o test --top-module $(TOP_MODULE) +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns --coverage
 
 generate: test.asm
 	riscv32-unknown-elf-as -march=rv32i -mabi=ilp32 -mlittle-endian -o test.elf $(ASM_TO_COMPILE)

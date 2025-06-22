@@ -42,12 +42,12 @@ ibus_interconnect ibus_ic(.*);
 // assertions and coverage
 property dbus_access_valid;
     @(posedge clk)
-    dbus_if_core0.bstart |-> |{dbus_if_mem0.ss, dbus_if_gpio0.ss};
+    dbus_if_core0.bstart && !rst_n |-> |{dbus_if_mem0.ss, dbus_if_gpio0.ss};
 endproperty
 
 property ibus_access_valid;
     @(posedge clk)
-    ibus_if_core0.bstart |-> |{ibus_if_mem0.ss, ibus_if_rom0.ss};
+    ibus_if_core0.bstart && !rst_n |-> |{ibus_if_mem0.ss, ibus_if_rom0.ss};
 endproperty
 
 

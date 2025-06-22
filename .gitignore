@@ -6,3 +6,5 @@ test.bin
 test.elf
 rom.mi
 Makefile.local
+html_coverage_report
+coverage*
