@@ -3,7 +3,8 @@
 module gpio_wrapped(slave_bus_if.slave bus, input bit clk);
 
 // simulate gpio
-logic [7:0] pins = {8'bZZ0ZZZ1Z} | (output_val & output_en);
+logic [7:0] pins;
+assign pins = {8'bZZ0ZZZ1Z} | (output_val & output_en);
 
 logic [7:0] input_val;
 logic [7:0] input_en;
