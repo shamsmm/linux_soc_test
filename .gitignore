@@ -8,3 +8,4 @@ rom.mi
 Makefile.local
 html_coverage_report
 coverage*
+test_be.bin
