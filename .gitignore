@@ -9,3 +9,5 @@ Makefile.local
 html_coverage_report
 coverage*
 test_be.bin
+test_code_build
+test_rv32_code.elf

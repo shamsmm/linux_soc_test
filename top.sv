@@ -2,7 +2,7 @@ module top;
 
 // simulation clock period and timeout
 localparam PERIOD = 5;
-localparam TIMEOUT = 100000;
+localparam TIMEOUT = 5000;
 
 // master clk and master rst_n
 bit clk, rst_n;
@@ -21,8 +21,15 @@ slave_bus_if ibus_if_rom0(clk, rst_n);
 // gpio memory mapped interface to bus (D-bus)
 slave_bus_if dbus_if_gpio0(clk, rst_n);
 
+// plic (D-bus)
+slave_bus_if dbus_if_plic0(clk, rst_n);
+
+// clit (D-bus)
+slave_bus_if dbus_if_clit0(clk, rst_n);
+
 // riscv32 core-0
-rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n));
+logic irq_sw0, irq_timer0;
+rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n), .irq_sw(irq_sw0), .irq_timer(irq_timer0));
 
 // dual port memory
 memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk), .rst_n(rst_n));
@@ -32,6 +39,9 @@ rom_wrapped rom0(.bus(ibus_if_rom0), .clk(clk), .rst_n(rst_n));
 
 // gpio memory mapped
 gpio_wrapped gpio0(.bus(dbus_if_gpio0), .clk(clk));
+
+// clint
+clint clint0(.bus(dbus_if_clit0), .clk(clk), .irq_sw(irq_sw0), .irq_timer(irq_timer0), .rst_n(rst_n));
 
 // interconnect
 
