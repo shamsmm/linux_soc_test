@@ -70,4 +70,4 @@ build_dir:
 	mkdir -p $(OBJS_DIR)
 
 clean:
-	rm -f test.fst test.vvp test.elf irom.bin $(TEST_CODE_NAME).elf
+	rm -f test.fst test.vvp test.elf irom.bin rom.mi $(TEST_CODE_NAME).elf
