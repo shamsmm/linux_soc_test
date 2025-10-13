@@ -20,7 +20,7 @@
 
 # Timer Interrupt Interval
 # Assuming a 50MHz clock, 25,000,000 cycles for 500ms delay
-.equ TIMER_INTERVAL,    25000000 # Adjust this value based on your actual clock speed and desired delay
+.equ TIMER_INTERVAL,    27000000 # Adjust this value based on your actual clock speed and desired delay
 
 
 # --- Main Entry Point ---

@@ -3,10 +3,11 @@ IC_SOURCE = ../src/interconnect
 FILES = ../src/rv_core/bus_if_types_pkg.sv
 FILES += ../src/rv_core/instructions.sv
 FILES += ../src/jtag.sv
+FILES += ../src/fifo.sv
 FILES += ../src/dtm_jtag.sv
 FILES += $(filter-out ../src/rv_core/instructions.sv, $(filter-out ../src/rv_core/bus_if_types_pkg.sv, $(wildcard $(RVCORE_SOURCE)/*.sv)))
 FILES += $(wildcard $(IC_SOURCE)/*.sv)
-FILES += memory.sv memory_word.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.sv top.sv jtag_test.sv
+FILES += memory.sv memory_word.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.sv top.sv jtag_test.sv fifo_test.sv
 
 #TOP_MODULE=top
 #ASM_TO_COMPILE=test2.asm
@@ -52,7 +53,8 @@ generate:
 gcc: build_dir rom.mi
 
 rom.mi: $(TEST_CODE_NAME).elf
-	riscv32-unknown-elf-objcopy -O binary --pad-to=1024 --gap-fill=0x00 -j .text $< test.bin
+	riscv32-unknown-elf-objcopy -O binary -j .text $< temp.bin
+	dd if=temp.bin of=test.bin bs=1024 count=1 conv=sync status=none
 	echo -e "#File_format=Hex\n#Address_depth=1024\n#Data_width=32" > $@
 	xxd -e test.bin | xxd -r > test_be.bin
 	xxd -p -c 4 test_be.bin >> $@
