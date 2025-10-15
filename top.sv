@@ -5,7 +5,7 @@ localparam PERIOD = 5;
 localparam TIMEOUT = 50000;
 
 // master clk and master rst_n
-bit clk, rst_n;
+bit clk, sysrst_n,rst_n;
 
 // riscv32 core-0 master interfaces to I-bus and D-bus
 master_bus_if dbus_if_core0(clk, rst_n);
@@ -48,6 +48,11 @@ clint clint0(.bus(dbus_if_clit0), .clk(clk), .irq_sw(irq_sw0), .irq_timer(irq_ti
 dbus_interconnect dbus_ic(.*);
 ibus_interconnect ibus_ic(.*);
 
+// Debug
+dtm_jtag debug_transport(.tdi(dtm_tdi), .trst(dtm_trst), .tms(dtm_tms), .tclk(dtm_tclk), .tdo(tdo), .tdo_en(tdo_en));
+
+logic ndmreset;
+dm debug_module(.ndmreset(ndmreset));
 
 // assertions and coverage
 property dbus_access_valid;
@@ -75,13 +80,13 @@ initial forever #PERIOD clk = !clk;
 initial #TIMEOUT $finish();
 
 initial begin
-    rst_n = 1;
+    sysrst_n = 1;
 
     // reset
     #1;
-    rst_n = 0;
+    sysrst_n = 0;
     # 1;
-    rst_n = 1;
+    sysrst_n = 1;
 end
 
 initial begin
