@@ -60,13 +60,13 @@ rom.mi: $(TEST_CODE_NAME).elf
 	xxd -p -c 4 test_be.bin >> $@
 
 $(TEST_CODE_NAME).elf: $(COBJ) $(ASOBJ) $(LINKER)
-	$(CC)gcc -march=rv32i_zicsr -mabi=ilp32 -O0 -nostdlib -T$(LINKER) $(COBJ) $(ASOBJ) -o $@
+	$(CC)gcc -march=rv32i -mabi=ilp32 -O0 -nostdlib -T$(LINKER) $(COBJ) $(ASOBJ) -o $@
 
 $(OBJS_DIR)/%.o: %.c
-	$(CC)gcc -march=rv32i_zicsr -mabi=ilp32 $< -c -nostdlib $(INCS) -o $@  $(CFLAGS)
+	$(CC)gcc -march=rv32i -mabi=ilp32 $< -c -nostdlib $(INCS) -o $@  $(CFLAGS)
 
 $(OBJS_DIR)/%.o: %.asm
-	$(CC)as -march=rv32i_zicsr -mabi=ilp32 $< -o $@
+	$(CC)as -march=rv32i -mabi=ilp32 $< -o $@
 
 build_dir:
 	mkdir -p $(OBJS_DIR)
