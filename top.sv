@@ -4,7 +4,7 @@ module top;
 // simulation clock period and timeout
 localparam PERIOD = 5;
 localparam JTAG_PERIOD = PERIOD * 18; // simulates 1MHz to 18MHz for example
-localparam TIMEOUT = 50000;
+localparam TIMEOUT = 60000;
 
 // master clk and master rst_n
 bit clk, sysrst_n,rst_n;
@@ -177,6 +177,19 @@ initial begin
     update_ir(6'h11); // access DMI
     read_dr41({7'h10, 32'h80000000, 2'b10}, drscan);
     #1000;
+
+    // Resume processor
+    tms = 1; // consecutive for 5 times
+    repeat(5) @(posedge tclk);
+    assert(state == TEST_LOGIC_RESET);
+
+    @(negedge tclk);
+    tms = 0; // got to RUN_TEST_IDLE
+    @(posedge tclk);
+    #1;
+    update_ir(6'h11); // access DMI
+    read_dr41({7'h10, 32'h40000000, 2'b10}, drscan);
+    #3000;
     $finish;
 end
 
