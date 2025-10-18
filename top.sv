@@ -11,7 +11,7 @@ bit clk, sysrst_n,rst_n;
 assign rst_n = !ndmreset & sysrst_n;
 // Debugging
 bit tdo, tdo_en, tclk, tdi, tms, trst, tclk_en, tclk_gen;
-logic [31:0] drscan = 0;
+logic [33+7:0] drscan = 0;
 always tclk = tclk_en ? tclk_gen : 0;
 initial #0.3 forever #JTAG_PERIOD tclk_gen = ~tclk_gen;
 
@@ -76,10 +76,10 @@ dm debug_module(.haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethal
 
 // CDC
 
-typedef struct {bit start; logic [1:0] op; logic [33:2] data; logic [7+33:34] address;} dmi_to_dm_t;
+typedef struct packed {bit start; logic [1:0] op; logic [33:2] data; logic [7+33:34] address;} dmi_to_dm_t;
 dmi_to_dm_t dmi_to_dm, dmi_to_dm_ff1, dmi_to_dm_ff2;
 
-typedef struct {bit finish; logic [33:2] data;} dm_to_dmi_t;
+typedef struct packed {bit finish; logic [33:2] data;} dm_to_dmi_t;
 dm_to_dmi_t dm_to_dmi, dm_to_dmi_ff1, dm_to_dmi_ff2;
 always_comb begin
     // ff0
@@ -157,7 +157,7 @@ initial begin
     #1 trst = 0;
     #1 trst = 1;
 
-    @(negedge tclk);
+    @(negedge clk);
     tclk_en = 1; // enable test clock always
 
     tms = 1; // consecutive for 5 times
@@ -170,16 +170,21 @@ initial begin
     #1;
 
     // read IDCODE initially
-    read_dr();
-    assert(drscan === 32'h1BEEF001);
+    read_dr32(32'hDEADBEEF, drscan[31:0]);
+    assert(drscan[31:0] === 32'h1BEEF001);
 
+    // HALT the processor
+    update_ir(6'h11); // access DMI
+    read_dr41({7'h75, 32'hDEADBEEF, 2'b00}, drscan);
+    #10;
+    $finish;
 end
 
 // JTAG
 jtag_state_t state;
 always_comb state = debug_transport.state;
 
-    task read_dr(); // 32 bit read
+    task read_dr32(input logic [31:0] write_data, output logic [31:0] output_data); // 32 bit read
         assert(state == RUN_TEST_IDLE);
 
         @(negedge tclk);
@@ -194,18 +199,65 @@ always_comb state = debug_transport.state;
         tms = 0;
         @(posedge tclk) #1 assert(state == SHIFT_DR);
 
-        drscan = 0; // initialize to 0
-        repeat(32) begin
+        output_data = 0; // initialize to 0
+        repeat(31) begin
             @(negedge tclk);
-            tdi = 0;
+            tdi = write_data[0];
+            write_data = write_data >> 1;
             tms = 0;
 
             @(posedge tclk) #1 assert(state == SHIFT_DR);
-            drscan = {tdo, drscan[31:1]};
+            output_data = {tdo, output_data[31:1]};
         end
+        @(negedge tclk);
+        tdi = write_data[0];
+        write_data = write_data >> 1;
+        tms = 1;
+
+        output_data = {tdo, output_data[31:1]};
+        @(posedge tclk); #1 assert(state == EXIT1_DR);
 
         @(negedge tclk);
         tms = 1;
+        @(posedge tclk); #1 assert(state == UPDATE_DR);
+
+        @(negedge tclk);
+        tms = 0; // hold it at RUN_TEST_IDLE
+        @(posedge tclk); #1 assert(state == RUN_TEST_IDLE);
+        #1;
+    endtask
+
+    task read_dr41(input logic [40:0] write_data, output logic [40:0] output_data); // 41 bit read
+        assert(state == RUN_TEST_IDLE);
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == SELECT_DR_SCAN);
+
+        @(negedge tclk);
+        tms = 0;
+        @(posedge tclk); #1 assert(state == CAPTURE_DR);
+
+        @(negedge tclk);
+        tms = 0;
+        @(posedge tclk) #1 assert(state == SHIFT_DR);
+
+        output_data = 0; // initialize to 0
+        repeat(40) begin
+            @(negedge tclk);
+            tdi = write_data[0];
+            write_data = write_data >> 1;
+            tms = 0;
+
+            @(posedge tclk) #1 assert(state == SHIFT_DR);
+            output_data = {tdo, output_data[40:1]};
+        end
+        @(negedge tclk);
+        tdi = write_data[0];
+        write_data = write_data >> 1;
+        tms = 1;
+
+        output_data = {tdo, output_data[40:1]};
         @(posedge tclk); #1 assert(state == EXIT1_DR);
 
         @(negedge tclk);
