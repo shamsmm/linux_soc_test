@@ -175,8 +175,8 @@ initial begin
 
     // HALT the processor
     update_ir(6'h11); // access DMI
-    read_dr41({7'h75, 32'hDEADBEEF, 2'b00}, drscan);
-    #10;
+    read_dr41({7'h10, 32'h80000000, 2'b10}, drscan);
+    #1000;
     $finish;
 end
 
