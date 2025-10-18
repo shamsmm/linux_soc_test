@@ -3,7 +3,7 @@ module top;
 
 // simulation clock period and timeout
 localparam PERIOD = 5;
-localparam JTAG_PERIOD = PERIOD * 18; // simulates 1MHz to 18MHz for example
+localparam JTAG_PERIOD = PERIOD * 3.375; // simulates 1MHz to 18MHz for example
 localparam TIMEOUT = 60000;
 
 // master clk and master rst_n
@@ -13,7 +13,7 @@ assign rst_n = !ndmreset & sysrst_n;
 bit tdo, tdo_en, tclk, tdi, tms, trst, tclk_en, tclk_gen;
 logic [33+7:0] drscan = 0;
 always tclk = tclk_en ? tclk_gen : 0;
-initial #0.3 forever #JTAG_PERIOD tclk_gen = ~tclk_gen;
+initial #2 forever #JTAG_PERIOD tclk_gen = ~tclk_gen;
 
 // riscv32 core-0 master interfaces to I-bus and D-bus
 master_bus_if dbus_if_core0(clk, rst_n);
@@ -107,7 +107,7 @@ always_ff @(posedge clk, negedge rst_n) begin
 end
 
 always_ff @(posedge tclk, negedge trst) begin
-    if (!rst_n) begin
+    if (!trst) begin
         dm_to_dmi_ff1 <= 0;
         dm_to_dmi_ff2 <= 0;
     end else begin
@@ -178,6 +178,21 @@ initial begin
     read_dr41({7'h10, 32'h80000000, 2'b10}, drscan);
     #1000;
 
+
+    // Read dmstatus
+    tms = 1; // consecutive for 5 times
+    repeat(5) @(posedge tclk);
+    assert(state == TEST_LOGIC_RESET);
+
+    @(negedge tclk);
+    tms = 0; // got to RUN_TEST_IDLE
+    @(posedge tclk);
+    #1;
+    update_ir(6'h11); // access DMI
+    read_dr41({7'h11, 32'h00000000, 2'b01}, drscan);
+    #1000
+
+
     // Resume processor
     tms = 1; // consecutive for 5 times
     repeat(5) @(posedge tclk);
@@ -189,7 +204,7 @@ initial begin
     #1;
     update_ir(6'h11); // access DMI
     read_dr41({7'h10, 32'h40000000, 2'b10}, drscan);
-    #3000;
+    #1000;
     $finish;
 end
 
