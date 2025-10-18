@@ -1,4 +1,5 @@
 module top;
+    import jtag::*;
 
 // simulation clock period and timeout
 localparam PERIOD = 5;
@@ -73,6 +74,49 @@ logic [7+33:34] dmi_address_dm;
 logic dmi_finish_dm;
 dm debug_module(.haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .halted(halted), .running(running), .clk(clk), .rst_n(rst_n), .ndmreset(ndmreset), .dmi_start(dmi_start_dm), .dmi_op(dmi_op_dm), .dmi_data_o(dmi_data_o_dm), .dmi_address(dmi_address_dm), .dmi_finish(dmi_finish_dm), .dmi_data_i(dmi_data_i_dm));
 
+// CDC
+
+typedef struct {bit start; logic [1:0] op; logic [33:2] data; logic [7+33:34] address;} dmi_to_dm_t;
+dmi_to_dm_t dmi_to_dm, dmi_to_dm_ff1, dmi_to_dm_ff2;
+
+typedef struct {bit finish; logic [33:2] data;} dm_to_dmi_t;
+dm_to_dmi_t dm_to_dmi, dm_to_dmi_ff1, dm_to_dmi_ff2;
+always_comb begin
+    // ff0
+    dmi_to_dm = {dmi_start_dtm, dmi_op_dtm, dmi_data_o_dtm, dmi_address_dtm};
+    dm_to_dmi = {dmi_finish_dm, dmi_data_i_dm};
+
+    // connect
+    dmi_start_dm = dmi_to_dm_ff2.start;
+    dmi_op_dm = dmi_to_dm_ff2.op;
+    dmi_data_o_dm = dmi_to_dm_ff2.data;
+    dmi_address_dm = dmi_to_dm_ff2.address;
+
+    dmi_finish_dtm = dm_to_dmi_ff2.finish;
+    dmi_data_i_dtm = dm_to_dmi_ff2.data;
+end
+
+always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
+        dmi_to_dm_ff1 <= 0;
+        dmi_to_dm_ff2 <= 0;
+    end else begin
+        dmi_to_dm_ff1 <= dmi_to_dm;
+        dmi_to_dm_ff2 <= dmi_to_dm_ff1;
+    end
+end
+
+always_ff @(posedge tclk, negedge trst) begin
+    if (!rst_n) begin
+        dm_to_dmi_ff1 <= 0;
+        dm_to_dmi_ff2 <= 0;
+    end else begin
+        dm_to_dmi_ff1 <= dm_to_dmi;
+        dm_to_dmi_ff2 <= dm_to_dmi_ff1;
+    end
+end
+
+
 // assertions and coverage
 property dbus_access_valid;
     @(posedge clk)
@@ -106,7 +150,115 @@ initial begin
     sysrst_n = 0;
     # 1;
     sysrst_n = 1;
+
+    // JTAG
+    // Release reset
+    trst = 1;
+    #1 trst = 0;
+    #1 trst = 1;
+
+    @(negedge tclk);
+    tclk_en = 1; // enable test clock always
+
+    tms = 1; // consecutive for 5 times
+    repeat(5) @(posedge tclk);
+    assert(state == TEST_LOGIC_RESET);
+
+    @(negedge tclk);
+    tms = 0; // got to RUN_TEST_IDLE
+    @(posedge tclk);
+    #1;
+
+    // read IDCODE initially
+    read_dr();
+    assert(drscan === 32'h1BEEF001);
+
 end
+
+// JTAG
+jtag_state_t state;
+always_comb state = debug_transport.state;
+
+    task read_dr(); // 32 bit read
+        assert(state == RUN_TEST_IDLE);
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == SELECT_DR_SCAN);
+
+        @(negedge tclk);
+        tms = 0;
+        @(posedge tclk); #1 assert(state == CAPTURE_DR);
+
+        @(negedge tclk);
+        tms = 0;
+        @(posedge tclk) #1 assert(state == SHIFT_DR);
+
+        drscan = 0; // initialize to 0
+        repeat(32) begin
+            @(negedge tclk);
+            tdi = 0;
+            tms = 0;
+
+            @(posedge tclk) #1 assert(state == SHIFT_DR);
+            drscan = {tdo, drscan[31:1]};
+        end
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == EXIT1_DR);
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == UPDATE_DR);
+
+        @(negedge tclk);
+        tms = 0; // hold it at RUN_TEST_IDLE
+        @(posedge tclk); #1 assert(state == RUN_TEST_IDLE);
+        #1;
+    endtask
+
+    task update_ir(logic [5:0] ir); // 32 bit read
+        assert(state == RUN_TEST_IDLE);
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == SELECT_DR_SCAN);
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == SELECT_IR_SCAN);
+
+        @(negedge tclk);
+        tms = 0;
+        @(posedge tclk); #1 assert(state == CAPTURE_IR);
+
+        @(negedge tclk);
+        tms = 0;
+        @(posedge tclk); #1 assert(state == SHIFT_IR);
+
+        // shift instruction
+        for (int i = 0; i < 5; i++) begin
+            @(negedge tclk);
+            tdi = ir[i];
+            tms = 0;
+            @(posedge tclk); #1 assert(state == SHIFT_IR);
+        end
+        @(negedge tclk);
+        tdi = ir[5];
+        tms = 1;
+        @(posedge tclk); #1 assert(state == EXIT1_IR);
+
+        @(negedge tclk);
+        tms = 1;
+        @(posedge tclk); #1 assert(state == UPDATE_IR);
+
+        @(negedge tclk);
+        tms = 0; // hold it at RUN_TEST_IDLE
+        @(posedge tclk); #1 assert(state == RUN_TEST_IDLE);
+        #1;
+    endtask
+
 
 initial begin
     // dump everything
