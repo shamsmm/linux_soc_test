@@ -18,6 +18,7 @@ initial #2 forever #JTAG_PERIOD tclk_gen = ~tclk_gen;
 
 // riscv32 core-0 master interfaces to I-bus and D-bus
 master_bus_if dbus_if_core0(clk, rst_n);
+master_bus_if dbus_if_dm0(clk, rst_n);
 master_bus_if ibus_if_core0(clk, rst_n);
 
 // dual port memory interface to I-bus and D-bus 
@@ -38,7 +39,12 @@ slave_bus_if dbus_if_clit0(clk, rst_n);
 
 // riscv32 core-0
 logic irq_sw0, irq_timer0, running, halted, haltreq, resumereq, resethaltreq;
-rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n), .irq_sw(irq_sw0), .irq_timer(irq_timer0), .halted(halted), .running(running));
+
+// debug signals
+access_register_command_control_t dbg_arcc;
+logic [31:0] dbg_rwrdata;
+logic [31:0] dbg_regout;
+rv_core #(.INITIAL_PC(32'h2000_0000)) core0(.dbg_arcc(dbg_arcc), .dbg_rwrdata(dbg_rwrdata), .dbg_regout(dbg_regout), .haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .ibus(ibus_if_core0), .dbus(dbus_if_core0), .clk(clk), .rst_n(rst_n), .irq_sw(irq_sw0), .irq_timer(irq_timer0), .halted(halted), .running(running));
 
 // dual port memory
 memory_wrapped mem0(.ibus(ibus_if_mem0), .dbus(dbus_if_mem0), .clk(clk), .rst_n(rst_n));
@@ -68,7 +74,7 @@ logic dtm_tdo;
 dtm_jtag debug_transport(.tdi(tdi), .trst(trst), .tms(tms), .tclk(tclk), .tdo(dtm_tdo), .tdo_en(tdo_en), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i), .clk(clk), .rst_n(rst_n));
 
 logic ndmreset;
-dm debug_module(.haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .halted(halted), .running(running), .clk(clk), .rst_n(rst_n), .ndmreset(ndmreset), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i));
+dm debug_module(.dbus(dbus_if_dm0), .dbg_arcc(dbg_arcc), .dbg_rwrdata(dbg_rwrdata), .dbg_regout(dbg_regout), .haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .halted(halted), .running(running), .clk(clk), .rst_n(rst_n), .ndmreset(ndmreset), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i));
 
 // assertions and coverage
 property dbus_access_valid;
