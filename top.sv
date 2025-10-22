@@ -117,55 +117,45 @@ initial begin
     #1 trst = 1;
 
     @(negedge clk);
-    tclk_en = 1; // enable test clock always
-
-    tms = 1; // consecutive for 5 times
-    repeat(5) @(posedge tclk);
-    assert(state == TEST_LOGIC_RESET);
-
-    @(negedge tclk);
-    tms = 0; // got to RUN_TEST_IDLE
-    @(posedge tclk);
-    #1;
+    tclk_en = 1; // enable test clock always (not like real world but after CDC-ing inside the DTM this is no problem)
 
     // read IDCODE initially
+    jtag_run_test_idle();
     read_dr32(32'hDEADBEEF, drscan[31:0]);
     assert(drscan[31:0] === 32'h1BEEF001);
 
     // HALT the processor
     update_ir(6'h11); // access DMI
-    read_dr41({7'h10, 32'h80000000, 2'b10}, drscan);
+    read_dr41({7'h10, 32'h80000001, 2'b10}, drscan);
     #1000;
 
 
     // Read dmstatus
-    tms = 1; // consecutive for 5 times
-    repeat(5) @(posedge tclk);
-    assert(state == TEST_LOGIC_RESET);
-
-    @(negedge tclk);
-    tms = 0; // got to RUN_TEST_IDLE
-    @(posedge tclk);
-    #1;
+    jtag_run_test_idle();
     update_ir(6'h11); // access DMI
-    read_dr41(41'h10800000002, drscan);
+    read_dr41(41'h11000000001, drscan);
+    #5
+    read_dr41(41'b0, drscan);
     #1000
 
 
     // Resume processor
-    tms = 1; // consecutive for 5 times
-    repeat(5) @(posedge tclk);
-    assert(state == TEST_LOGIC_RESET);
-
-    @(negedge tclk);
-    tms = 0; // got to RUN_TEST_IDLE
-    @(posedge tclk);
-    #1;
+    jtag_run_test_idle();
     update_ir(6'h11); // access DMI
-    read_dr41({7'h10, 32'h40000000, 2'b10}, drscan);
+    read_dr41({7'h10, 32'h40000001, 2'b10}, drscan);
     #1000;
-    $finish;
 end
+
+    task jtag_run_test_idle();
+        tms = 1; // consecutive for 5 times
+        repeat(5) @(posedge tclk);
+        assert(state == TEST_LOGIC_RESET);
+
+        @(negedge tclk);
+        tms = 0; // got to RUN_TEST_IDLE
+        @(posedge tclk);
+        #1;
+    endtask
 
 // JTAG
 jtag_state_t state;
