@@ -128,15 +128,39 @@ initial begin
     update_ir(6'h11); // access DMI
     read_dr41({7'h10, 32'h80000001, 2'b10}, drscan);
     #1000;
+    assert(halted);
 
 
     // Read dmstatus
     jtag_run_test_idle();
     update_ir(6'h11); // access DMI
-    read_dr41(41'h11000000001, drscan);
-    #5
-    read_dr41(41'b0, drscan);
-    #1000
+    read_dr41({7'h11, 32'h00000000, 2'b1}, drscan);
+    #100;
+    read_dr41(41'b0, drscan); // JTAG to spit out read data
+    #1000;
+
+
+    step = 9;
+    // Write garbage to data0
+    read_dr41({7'h04, 32'hDEADBEEF, 2'b10}, drscan);
+    #50;
+    assert(debug_module.data0 == 32'hDEADBEEF);
+    // Read garbage to data0
+    read_dr41({7'h04, 32'h0, 2'b01}, drscan);
+    #5;
+    read_dr41(41'h0, drscan);
+    assert(drscan[33:2] == 32'hDEADBEEF);
+    
+
+    #200;
+    // Read debug pc into data 0
+    read_dr41({7'h17, {8'h0, 1'b0, 3'd2, 1'b0, 1'b0, 1'b1, 1'b0, 16'h07b1}, 2'd2}, drscan);
+    #100;
+    // read data0
+    read_dr41({7'h04, 32'h00000000, 2'b1}, drscan);
+    #100;
+    read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
+    assert(drscan[33:2] == core0.dpc); // should be the PC that is stuck now
 
 
     // Resume processor
@@ -144,6 +168,7 @@ initial begin
     update_ir(6'h11); // access DMI
     read_dr41({7'h10, 32'h40000001, 2'b10}, drscan);
     #1000;
+    assert(running);
 end
 
     task jtag_run_test_idle();
