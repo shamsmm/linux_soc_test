@@ -161,6 +161,14 @@ initial begin
     read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
     assert(drscan[33:2] == core0.dpc); // should be the PC that is stuck now
 
+    #50;
+    // Let's read gpio
+    read_dr41({7'h39, 32'h3000000C, 2'd2}, drscan); // put address
+    read_dr41({7'h17, {8'h2, 1'b0, 3'h2, 1'b1, 2'd0, 1'b0, 16'h0}, 2'd2}, drscan); // abstract command start system bus access
+    #50;
+    read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
+    assert(drscan[9:2] == gpio0.output_val); // should be the gpio output vals
+
 
     // Resume processor
     jtag_run_test_idle();
