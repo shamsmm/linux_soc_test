@@ -71,10 +71,10 @@ logic [33:2] dmi_data_o, dmi_data_i;
 logic [7+33:34] dmi_address;
 logic dmi_finish;
 logic dtm_tdo;
-dtm_jtag debug_transport(.tdi(tdi), .trst(trst), .tms(tms), .tclk(tclk), .tdo(dtm_tdo), .tdo_en(tdo_en), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i), .clk(clk), .rst_n(rst_n));
+dtm_jtag debug_transport(.tdi(tdi), .trst(trst), .tms(tms), .tclk(tclk), .tdo(dtm_tdo), .tdo_en(tdo_en), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i), .clk(clk));
 
 logic ndmreset;
-dm debug_module(.dbus(dbus_if_dm0), .dbg_arcc(dbg_arcc), .dbg_rwrdata(dbg_rwrdata), .dbg_regout(dbg_regout), .haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .halted(halted), .running(running), .clk(clk), .rst_n(rst_n), .ndmreset(ndmreset), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i));
+dm debug_module(.dbus(dbus_if_dm0), .dbg_arcc(dbg_arcc), .dbg_rwrdata(dbg_rwrdata), .dbg_regout(dbg_regout), .haltreq(haltreq), .resumereq(resumereq), .resethaltreq(resethaltreq), .halted(halted), .running(running), .clk(clk), .ndmreset(ndmreset), .dmi_start(dmi_start), .dmi_op(dmi_op), .dmi_data_o(dmi_data_o), .dmi_address(dmi_address), .dmi_finish(dmi_finish), .dmi_data_i(dmi_data_i));
 
 // assertions and coverage
 property dbus_access_valid;
@@ -140,7 +140,6 @@ initial begin
     #1000;
 
 
-    step = 9;
     // Write garbage to data0
     read_dr41({7'h04, 32'hDEADBEEF, 2'b10}, drscan);
     #50;
@@ -169,6 +168,16 @@ initial begin
     read_dr41({7'h10, 32'h40000001, 2'b10}, drscan);
     #1000;
     assert(running);
+
+    #50;
+
+    // let's reset the whole system
+    read_dr41({7'h10, 32'h00000003, 2'b10}, drscan); // ndmreset 1==0 => 1to0 so should PC become default.
+    #50;
+    assert(ibus_if_core0.addr == 32'h2000_0000);
+    read_dr41({7'h10, 32'h0000001, 2'b10}, drscan); // ndmreset 0==1 => 0to1 should be back to normal.
+    #50;
+    assert(ibus_if_core0.addr != 32'h2000_0000); // TODO: maybe code flashed coincidently makes it go back to this addree, I assume not
 end
 
     task jtag_run_test_idle();
