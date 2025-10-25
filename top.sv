@@ -163,8 +163,10 @@ initial begin
 
     #50;
     // Let's read gpio
-    read_dr41({7'h39, 32'h3000000C, 2'd2}, drscan); // put address
-    read_dr41({7'h17, {8'h2, 1'b0, 3'h2, 1'b1, 2'd0, 1'b0, 16'h0}, 2'd2}, drscan); // abstract command start system bus access
+    read_dr41({7'h38, {3'b0, 6'b0, 1'b0, 1'b0, 1'b1, 3'd2, 1'b0, 1'b0, 3'b0, 7'b0, 5'b0}, 2'd2}, drscan); // set read on address
+    read_dr41({7'h39, 32'h3000000C, 2'd2}, drscan); // put address, this triggers read
+    read_dr41({7'h3C, 32'h00000000, 2'd1}, drscan); // read data
+    
     #50;
     read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
     assert(drscan[9:2] == gpio0.output_val); // should be the gpio output vals
