@@ -161,6 +161,16 @@ initial begin
     read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
     assert(drscan[33:2] == core0.dpc); // should be the PC that is stuck now
 
+
+    // Read misa into data 0
+    read_dr41({7'h17, {8'h0, 1'b0, 3'd2, 1'b0, 1'b0, 1'b1, 1'b0, 16'h0301}, 2'd2}, drscan);
+    #100;
+    // read data0
+    read_dr41({7'h04, 32'h00000000, 2'b1}, drscan);
+    #100;
+    read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
+    assert(drscan[33:2] == 32'h40000100); // should be the PC that is stuck now
+
     #50;
     // Let's read gpio
     read_dr41({7'h38, {3'b0, 6'b0, 1'b0, 1'b0, 1'b1, 3'd2, 1'b0, 1'b0, 3'b0, 7'b0, 5'b0}, 2'd2}, drscan); // set read on address
