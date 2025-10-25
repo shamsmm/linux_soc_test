@@ -24,7 +24,7 @@ always_comb begin
 end
 
 always_ff @( posedge clk ) begin
-    if (bus.ss && bus.ttype == WRITE) begin
+    if (bus.bstart && bus.ss && bus.ttype == WRITE) begin
         case(bus.addr[7:0])
             8'h04: input_en <= bus.wdata[7:0];
             8'h08: output_en <= bus.wdata[7:0];
