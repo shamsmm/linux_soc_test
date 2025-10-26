@@ -10,6 +10,9 @@ FILES += $(wildcard $(IC_SOURCE)/*.sv)
 FILES += ../src/soc.sv
 FILES += memory.sv memory_word.sv memory_wrapped.sv rom_wrapped.sv gpio_wrapped.sv top.sv jtag_test.sv
 
+FILES_DPI = ./jtag-dpi/dpi/jtag_dpi_remote_bit_bang.sv tb_dpi.sv
+DPI_C_FILES = ./jtag-dpi/dpi/jtag_dpi_remote_bit_bang.c
+
 #TOP_MODULE=top
 #ASM_TO_COMPILE=test2.asm
 #C_SRC =
@@ -40,7 +43,15 @@ coverage: simulate
 	genhtml coverage.info --output-directory html_coverage_report
 
 compile: gcc
-	verilator --binary -j 0 -o test --top-module $(TOP_MODULE) +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns --coverage
+	verilator --binary -j 0 -o test --top-module $(TOP_MODULE) +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns --coverage -Wno-UNOPTFLAT --report-unoptflat
+
+server:
+	verilator --binary -exe -build $(FILES) $(FILES_DPI) $(DPI_C_FILES) -j 0 -o test_server --top-module tb_dpi \
+	    +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) \
+	    --trace-fst --trace-structs --trace-params \
+	    --assert --timescale 1ns/1ns --coverage \
+	    -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE --report-unoptflat
+	./obj_dir/test_server
 
 # Single file asm, no linking or c code
 generate:

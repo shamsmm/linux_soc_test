@@ -1,0 +1,6 @@
+[submodule "jtag_dpi"]
+	path = jtag_dpi
+	url = https://github.com/pulp-platform/jtag_dpi.git
+[submodule "jtag-dpi"]
+	path = jtag-dpi
+	url = https://git.sr.ht/~bryanb/jtag-dpi
