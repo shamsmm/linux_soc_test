@@ -1,6 +1,6 @@
 // byte accessed, 4-byte aligned 8-bit gpio
 // TODO: interrupts
-module gpio_wrapped(slave_bus_if.slave bus, input bit clk);
+module gpio_wrapped(slave_bus_if.slave bus, input bit clk, inout [7:0] gpio, input bit rst_n);
 
 // simulate gpio
 logic [7:0] pins;

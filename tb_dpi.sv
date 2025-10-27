@@ -1,7 +1,7 @@
 module tb_dpi;
 
 // simulation clock period
-localparam PERIOD = 50;
+localparam PERIOD = 1;
 initial forever #PERIOD clk = !clk;
 
 // master clk and master rst_n

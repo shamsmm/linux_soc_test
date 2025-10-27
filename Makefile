@@ -53,6 +53,14 @@ server:
 	    -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE --report-unoptflat
 	./obj_dir/test_server
 
+opt-server:
+	verilator -O3 --x-assign fast --x-initial fast --binary -exe -build $(FILES) $(FILES_DPI) $(DPI_C_FILES) -j 0 -o test_server --top-module tb_dpi \
+	    +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) \
+	    --timescale 1ns/1ns \
+	    -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE --report-unoptflat
+	./obj_dir/test_server
+
+
 # Single file asm, no linking or c code
 generate:
 	riscv64-unknown-elf-as -march=rv32i_zicsr -mabi=ilp32 -mlittle-endian -o test.elf $(ASM_TO_COMPILE)
