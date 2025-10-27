@@ -20,7 +20,7 @@ DPI_C_FILES = ./jtag-dpi/dpi/jtag_dpi_remote_bit_bang.c
 include Makefile.local # if it is not present then override TOP_MODULE directly and comment this line
 
 # skip warning if needed
-VERILATOR_OPTIONS=-Wno-CASEINCOMPLETE
+VERILATOR_OPTIONS=
 
 # Assemble, Compile and Link
 CC = riscv64-unknown-elf-

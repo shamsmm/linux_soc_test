@@ -20,6 +20,7 @@ always_comb begin
         8'h04: bus.rdata = {24'b0, input_en};
         8'h08: bus.rdata = {24'b0, output_en};
         8'h0C: bus.rdata = {24'b0, output_val};
+        default: bus.rdata = 0;
     endcase
 end
 
@@ -29,6 +30,7 @@ always_ff @( posedge clk ) begin
             8'h04: input_en <= bus.wdata[7:0];
             8'h08: output_en <= bus.wdata[7:0];
             8'h0C: output_val <= bus.wdata[7:0];
+            default:;
         endcase
     end
 end
