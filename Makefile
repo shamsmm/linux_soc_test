@@ -20,7 +20,7 @@ DPI_C_FILES = ./jtag-dpi/dpi/jtag_dpi_remote_bit_bang.c
 include Makefile.local # if it is not present then override TOP_MODULE directly and comment this line
 
 # skip warning if needed
-VERILATOR_OPTIONS=
+VERILATOR_OPTIONS=-Wno-CASEINCOMPLETE
 
 # Assemble, Compile and Link
 CC = riscv64-unknown-elf-
@@ -54,10 +54,11 @@ server:
 	./obj_dir/test_server
 
 opt-server:
-	verilator -O3 --x-assign fast --x-initial fast --binary -exe -build $(FILES) $(FILES_DPI) $(DPI_C_FILES) -j 0 -o test_server --top-module tb_dpi \
+	verilator -DJTAG_BB_TEST_FRAMEWORK=0 -O3 --x-assign fast --x-initial fast --binary -exe -build $(FILES) $(FILES_DPI) $(DPI_C_FILES) -j 0 -o test_server --top-module tb_dpi \
 	    +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) \
 	    --timescale 1ns/1ns \
-	    -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE --report-unoptflat
+	    -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE --report-unoptflat\
+		-CFLAGS -DJTAG_BB_TEST_FRAMEWORK=0
 	./obj_dir/test_server
 
 
