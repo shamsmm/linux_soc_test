@@ -14,6 +14,10 @@ assign rst_n = !ndmreset & sysrst_n;
 bit tdo, tdo_en, tclk, tdi, tms, trst, tclk_en, tclk_gen;
 
 logic [33+7:0] drscan = 0;
+logic [33:2] drscan_word;
+
+always_comb drscan_word = drscan[33:2];
+
 logic [7:0] gpio;
 always tclk = tclk_en ? tclk_gen : 0;
 initial #2 forever #JTAG_PERIOD tclk_gen = ~tclk_gen;
@@ -117,6 +121,17 @@ initial begin
     read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
     assert(drscan[9:2] == soc.gpio0.output_val); // should be the gpio output vals
 
+
+    #50;
+    // Let's write to memory (should be OK as long as code does not need memory)
+    read_dr41({7'h39, 32'hF0000000, 2'd2}, drscan); // put address, this triggers read
+    read_dr41({7'h3C, 32'hDEADBEEF, 2'd2}, drscan); // write data
+    read_dr41({7'h39, 32'hF0000000, 2'd2}, drscan); // put address, this triggers read
+    read_dr41({7'h3C, 32'h00000000, 2'd1}, drscan); // read data
+    #50;
+    read_dr41(41'b0, drscan); // JTAG to spit out read data of last transaction
+    assert(drscan[33:2] == 32'hDEADBEEF); // should be the gpio output vals
+    // TODO:
 
     // Resume processor
     jtag_run_test_idle();
@@ -289,6 +304,17 @@ initial begin
 
     // initialize RAM memory
     //$readmemh("memory.hex", mem0.wrapped_mem.mem,0,1000);
+    soc.mem0.wrapped_mem.mem[8'h10] = 32'hDEAD0000; 
+    soc.mem0.wrapped_mem.mem[8'h14] = 32'hDEAD0001; 
+    soc.mem0.wrapped_mem.mem[8'h18] = 32'hDEAD0002; 
+    soc.mem0.wrapped_mem.mem[8'h1C] = 32'hDEAD0003; 
+    soc.mem0.wrapped_mem.mem[8'h20] = 32'hDEAD0004; 
+    soc.mem0.wrapped_mem.mem[8'h24] = 32'hDEAD0005; 
+    soc.mem0.wrapped_mem.mem[8'h28] = 32'hDEAD0006; 
+    soc.mem0.wrapped_mem.mem[8'h2C] = 32'hDEAD0007; 
+    soc.mem0.wrapped_mem.mem[8'h30] = 32'hDEAD0008; 
+    soc.mem0.wrapped_mem.mem[8'h34] = 32'hDEAD0009; 
+    soc.mem0.wrapped_mem.mem[8'h38] = 32'hDEAD0010; 
 end
 
 endmodule

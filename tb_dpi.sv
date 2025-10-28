@@ -58,6 +58,18 @@ initial begin
 
     // initialize RAM memory
     //$readmemh("memory.hex", mem0.wrapped_mem.mem,0,1000);
+    // word addressed
+    soc.mem0.wrapped_mem.mem[0] = 32'hDEAD0000; 
+    soc.mem0.wrapped_mem.mem[1] = 32'hDEAD0001; 
+    soc.mem0.wrapped_mem.mem[2] = 32'hDEAD0002; 
+    soc.mem0.wrapped_mem.mem[3] = 32'hDEAD0003; 
+    soc.mem0.wrapped_mem.mem[4] = 32'hDEAD0004; 
+    soc.mem0.wrapped_mem.mem[5] = 32'hDEAD0005; 
+    soc.mem0.wrapped_mem.mem[6] = 32'hDEAD0006; 
+    soc.mem0.wrapped_mem.mem[7] = 32'hDEAD0007; 
+    soc.mem0.wrapped_mem.mem[8] = 32'hDEAD0008; 
+    soc.mem0.wrapped_mem.mem[9] = 32'hDEAD0009; 
+    soc.mem0.wrapped_mem.mem[10] = 32'hDEAD0010; 
 end
 
 endmodule
