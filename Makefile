@@ -45,7 +45,7 @@ coverage: simulate
 compile: gcc
 	verilator --binary -j 0 -o test --top-module $(TOP_MODULE) +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) $(FILES) $(VERILATOR_OPTIONS) --trace-fst --trace-structs --trace-params --assert --timescale 1ns/1ns --coverage -Wno-UNOPTFLAT --report-unoptflat
 
-server:
+server: gcc
 	verilator --binary -exe -build $(FILES) $(FILES_DPI) $(DPI_C_FILES) -j 0 -o test_server --top-module tb_dpi \
 	    +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) \
 	    --trace-fst --trace-structs --trace-params \
@@ -53,7 +53,7 @@ server:
 	    -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE --report-unoptflat
 	./obj_dir/test_server
 
-opt-server:
+opt-server: gcc
 	verilator -DJTAG_BB_TEST_FRAMEWORK=0 -O3 --x-assign fast --x-initial fast --binary -exe -build $(FILES) $(FILES_DPI) $(DPI_C_FILES) -j 0 -o test_server --top-module tb_dpi \
 	    +incdir+$(RVCORE_SOURCE) +incdir+$(IC_SOURCE) \
 	    --timescale 1ns/1ns \
